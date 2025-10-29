@@ -1,0 +1,128 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Sistema de Reservas - Design System Corporativo */
+
+@layer base {
+  :root {
+    --background: 0 0% 98%;
+    --foreground: 210 20% 20%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 210 20% 20%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 210 20% 20%;
+
+    --primary: 142 76% 36%;
+    --primary-foreground: 0 0% 100%;
+    --primary-hover: 142 76% 30%;
+
+    --secondary: 140 40% 94%;
+    --secondary-foreground: 142 20% 30%;
+
+    --muted: 210 40% 96%;
+    --muted-foreground: 210 15% 55%;
+
+    --accent: 140 100% 95%;
+    --accent-foreground: 142 100% 35%;
+
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 140 30% 88%;
+    --input: 140 30% 88%;
+    --ring: 142 76% 36%;
+
+    /* Cores específicas do sistema */
+    --available: 142 76% 36%;
+    --booked: 0 84% 60%;
+    --pending: 38 92% 50%;
+    --urgent: 0 84% 60%;
+    --high: 14 100% 57%;
+    --normal: 38 92% 50%;
+    --low: 142 76% 36%;
+    
+    /* Gradientes */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-hover)));
+    --gradient-card: linear-gradient(135deg, hsl(var(--card)), hsl(var(--accent)));
+    
+    /* Sombras */
+    --shadow-soft: 0 2px 10px hsl(var(--primary) / 0.1);
+    --shadow-medium: 0 4px 20px hsl(var(--primary) / 0.15);
+    --shadow-strong: 0 8px 30px hsl(var(--primary) / 0.2);
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 142 84% 4%;
+    --foreground: 140 40% 98%;
+
+    --card: 142 84% 4%;
+    --card-foreground: 140 40% 98%;
+
+    --popover: 142 84% 4%;
+    --popover-foreground: 140 40% 98%;
+
+    --primary: 142 76% 36%;
+    --primary-foreground: 0 0% 98%;
+
+    --secondary: 142 32% 17%;
+    --secondary-foreground: 140 40% 98%;
+
+    --muted: 142 32% 17%;
+    --muted-foreground: 140 20% 65%;
+
+    --accent: 142 32% 17%;
+    --accent-foreground: 140 40% 98%;
+
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 140 40% 98%;
+
+    --border: 142 32% 17%;
+    --input: 142 32% 17%;
+    --ring: 142 76% 36%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
