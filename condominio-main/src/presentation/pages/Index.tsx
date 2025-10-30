@@ -38,7 +38,6 @@ const IndexContent = () => {
     try {
       setLoading(true);
       
-      // Use ApiProxy instead of direct supabase calls
       const options: any = {
         order: { column: 'created_at', ascending: false }
       };
@@ -79,7 +78,6 @@ const IndexContent = () => {
         resident_name: profile.display_name || newReservation.resident_name,
       };
 
-      // Use ApiProxy instead of direct supabase calls
       const { data, error } = await ApiProxy.insert('reservations', [reservationData]);
 
       if (error) {
@@ -115,8 +113,6 @@ const IndexContent = () => {
       if (reason) {
         updateData.cancellation_reason = reason;
       }
-
-      // Use ApiProxy instead of direct supabase calls
       const { error } = await ApiProxy.update('reservations', updateData, { id });
 
       if (error) {
