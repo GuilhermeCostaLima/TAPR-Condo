@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { ApiProxy } from '@/infrastructure/api/ApiProxy';
 import CondominiumLayout from '@/components/CondominiumLayout';
 import ReservationCalendar from '@/components/ReservationCalendar';
 import ReservationForm from '@/components/ReservationForm';
@@ -36,14 +37,18 @@ const IndexContent = () => {
 
     try {
       setLoading(true);
-      let query = supabase.from('reservations').select('*');
+      
+      // Use ApiProxy instead of direct supabase calls
+      const options: any = {
+        order: { column: 'created_at', ascending: false }
+      };
       
       // Residents can only see their own reservations
       if (!isAdmin) {
-        query = query.eq('user_id', profile.user_id);
+        options.filters = { user_id: profile.user_id };
       }
       
-      const { data, error } = await query.order('created_at', { ascending: false });
+      const { data, error } = await ApiProxy.select('reservations', options);
 
       if (error) {
         console.error('Error fetching reservations:', error);
@@ -74,11 +79,8 @@ const IndexContent = () => {
         resident_name: profile.display_name || newReservation.resident_name,
       };
 
-      const { data, error } = await supabase
-        .from('reservations')
-        .insert([reservationData])
-        .select()
-        .single();
+      // Use ApiProxy instead of direct supabase calls
+      const { data, error } = await ApiProxy.insert('reservations', [reservationData]);
 
       if (error) {
         console.error('Error creating reservation:', error);
@@ -90,11 +92,13 @@ const IndexContent = () => {
         return;
       }
 
-      setReservations(prev => [data as Reservation, ...prev]);
-      toast({
-        title: "Reserva criada!",
-        description: "Sua reserva foi enviada para aprovação.",
-      });
+      if (data && data[0]) {
+        setReservations(prev => [data[0] as Reservation, ...prev]);
+        toast({
+          title: "Reserva criada!",
+          description: "Sua reserva foi enviada para aprovação.",
+        });
+      }
     } catch (error) {
       console.error('Error creating reservation:', error);
       toast({
@@ -112,10 +116,8 @@ const IndexContent = () => {
         updateData.cancellation_reason = reason;
       }
 
-      const { error } = await supabase
-        .from('reservations')
-        .update(updateData)
-        .eq('id', id);
+      // Use ApiProxy instead of direct supabase calls
+      const { error } = await ApiProxy.update('reservations', updateData, { id });
 
       if (error) {
         console.error('Error updating reservation:', error);

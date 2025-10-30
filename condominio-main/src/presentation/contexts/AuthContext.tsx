@@ -53,18 +53,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       setProfile(profileData);
 
-      // Fetch user roles
-      const { data: rolesData, error: rolesError } = await (supabase as any)
+      // Fetch user roles from user_roles table
+      const { data: rolesData, error: rolesError } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', user.id);
 
       if (rolesError) {
         console.error('Error fetching roles:', rolesError);
+        // Fallback to empty array if roles table doesn't have data
+        setUserRoles([]);
         return;
       }
 
-      setUserRoles(rolesData?.map((r: any) => r.role as AppRole) || []);
+      setUserRoles(rolesData?.map((r: UserRole) => r.role) || []);
     } catch (error) {
       console.error('Error fetching profile:', error);
     }

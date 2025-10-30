@@ -8,6 +8,32 @@ import { Textarea } from '@/components/ui/textarea';
 import { CalendarPlus, User, Building, Clock, Phone, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Reservation } from '@/types/supabase';
+import { z } from 'zod';
+
+const reservationSchema = z.object({
+  residentName: z.string()
+    .trim()
+    .min(1, 'Nome é obrigatório')
+    .max(100, 'Nome deve ter no máximo 100 caracteres'),
+  apartment: z.string()
+    .trim()
+    .min(1, 'Número do apartamento é obrigatório')
+    .max(10, 'Número deve ter no máximo 10 caracteres'),
+  timeSlot: z.string()
+    .min(1, 'Horário é obrigatório'),
+  event: z.string()
+    .trim()
+    .min(1, 'Tipo de evento é obrigatório')
+    .max(100, 'Tipo de evento deve ter no máximo 100 caracteres'),
+  contact: z.string()
+    .trim()
+    .min(1, 'Contato é obrigatório')
+    .regex(/^[\d\s\(\)\-\+]+$/, 'Formato de contato inválido')
+    .max(20, 'Contato deve ter no máximo 20 caracteres'),
+  observations: z.string()
+    .max(500, 'Observações devem ter no máximo 500 caracteres')
+    .optional()
+});
 
 interface ReservationFormProps {
   selectedDate: string | null;
@@ -66,13 +92,25 @@ const ReservationForm: React.FC<ReservationFormProps> = ({
       return;
     }
 
-    if (!formData.residentName || !formData.apartment || !formData.timeSlot || !formData.event || !formData.contact) {
-      toast({
-        title: "Erro",
-        description: "Preencha todos os campos obrigatórios.",
-        variant: "destructive"
+    // Validate input using Zod schema
+    try {
+      reservationSchema.parse({
+        residentName: formData.residentName,
+        apartment: formData.apartment,
+        timeSlot: formData.timeSlot,
+        event: formData.event,
+        contact: formData.contact,
+        observations: formData.observations
       });
-      return;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast({
+          title: "Erro de Validação",
+          description: error.errors[0].message,
+          variant: "destructive"
+        });
+        return;
+      }
     }
 
     const newReservation: Omit<Reservation, 'id'> = {

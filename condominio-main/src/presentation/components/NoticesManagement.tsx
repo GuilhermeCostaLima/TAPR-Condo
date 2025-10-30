@@ -10,8 +10,24 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Bell, Search, Filter, Plus, Calendar, AlertTriangle, Info, CheckCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { ApiProxy } from '@/infrastructure/api/ApiProxy';
 import { Notice } from '@/types/supabase';
 import { useToast } from '@/hooks/use-toast';
+import { z } from 'zod';
+
+const noticeSchema = z.object({
+  title: z.string()
+    .trim()
+    .min(1, 'Título é obrigatório')
+    .max(200, 'Título deve ter no máximo 200 caracteres'),
+  content: z.string()
+    .trim()
+    .min(1, 'Conteúdo é obrigatório')
+    .max(2000, 'Conteúdo deve ter no máximo 2000 caracteres'),
+  category: z.string(),
+  priority: z.enum(['low', 'normal', 'high', 'urgent']),
+  expiresAt: z.string().optional()
+});
 
 const NoticesManagement: React.FC = () => {
   const [notices, setNotices] = useState<Notice[]>([]);
@@ -50,10 +66,11 @@ const NoticesManagement: React.FC = () => {
   const fetchNotices = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('notices')
-        .select('*')
-        .order('created_at', { ascending: false });
+      
+      // Use ApiProxy instead of direct supabase calls
+      const { data, error } = await ApiProxy.select('notices', {
+        order: { column: 'created_at', ascending: false }
+      });
 
       if (error) throw error;
       setNotices((data || []) as Notice[]);
@@ -111,13 +128,24 @@ const NoticesManagement: React.FC = () => {
   };
 
   const handleAddNotice = async () => {
-    if (!newNotice.title.trim() || !newNotice.content.trim()) {
-      toast({
-        title: "Erro",
-        description: "Título e conteúdo são obrigatórios.",
-        variant: "destructive"
+    // Validate input using Zod schema
+    try {
+      noticeSchema.parse({
+        title: newNotice.title,
+        content: newNotice.content,
+        category: newNotice.category,
+        priority: newNotice.priority,
+        expiresAt: newNotice.expiresAt
       });
-      return;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast({
+          title: "Erro de Validação",
+          description: error.errors[0].message,
+          variant: "destructive"
+        });
+        return;
+      }
     }
 
     try {
@@ -141,9 +169,8 @@ const NoticesManagement: React.FC = () => {
         expires_at: newNotice.expiresAt ? new Date(newNotice.expiresAt).toISOString() : null
       };
 
-      const { error } = await supabase
-        .from('notices')
-        .insert([noticeData]);
+      // Use ApiProxy instead of direct supabase calls
+      const { error } = await ApiProxy.insert('notices', [noticeData]);
 
       if (error) throw error;
 
@@ -179,13 +206,26 @@ const NoticesManagement: React.FC = () => {
   };
 
   const handleUpdateNotice = async () => {
-    if (!editingNotice || !editNotice.title.trim() || !editNotice.content.trim()) {
-      toast({
-        title: "Erro",
-        description: "Título e conteúdo são obrigatórios.",
-        variant: "destructive"
+    if (!editingNotice) return;
+
+    // Validate input using Zod schema
+    try {
+      noticeSchema.parse({
+        title: editNotice.title,
+        content: editNotice.content,
+        category: editNotice.category,
+        priority: editNotice.priority,
+        expiresAt: editNotice.expiresAt
       });
-      return;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast({
+          title: "Erro de Validação",
+          description: error.errors[0].message,
+          variant: "destructive"
+        });
+        return;
+      }
     }
 
     try {
@@ -198,10 +238,8 @@ const NoticesManagement: React.FC = () => {
         expires_at: editNotice.expiresAt ? new Date(editNotice.expiresAt).toISOString() : null
       };
 
-      const { error } = await supabase
-        .from('notices')
-        .update(noticeData)
-        .eq('id', editingNotice.id);
+      // Use ApiProxy instead of direct supabase calls
+      const { error } = await ApiProxy.update('notices', noticeData, { id: editingNotice.id });
 
       if (error) throw error;
 
@@ -229,10 +267,11 @@ const NoticesManagement: React.FC = () => {
       const notice = notices.find(n => n.id === noticeId);
       if (!notice) return;
 
-      const { error } = await supabase
-        .from('notices')
-        .update({ is_active: !notice.is_active })
-        .eq('id', noticeId);
+      // Use ApiProxy instead of direct supabase calls
+      const { error } = await ApiProxy.update('notices', 
+        { is_active: !notice.is_active },
+        { id: noticeId }
+      );
 
       if (error) throw error;
 

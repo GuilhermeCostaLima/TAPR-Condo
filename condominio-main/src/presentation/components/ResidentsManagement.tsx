@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Users, Search, Filter, UserCheck, UserX, Shield } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { ApiProxy } from '@/infrastructure/api/ApiProxy';
 import { Profile, AppRole } from '@/types/supabase';
 import { useToast } from '@/hooks/use-toast';
 
@@ -26,20 +27,19 @@ const ResidentsManagement: React.FC = () => {
 
   const fetchResidents = async () => {
     try {
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('apartment_number');
+      // Use ApiProxy instead of direct supabase calls
+      const { data: profiles, error: profilesError } = await ApiProxy.select('profiles', {
+        order: { column: 'apartment_number', ascending: true }
+      });
 
       if (profilesError) throw profilesError;
 
       // Fetch roles for each user
       const residentsWithRoles = await Promise.all(
         (profiles || []).map(async (profile) => {
-          const { data: rolesData } = await (supabase as any)
-            .from('user_roles')
-            .select('role')
-            .eq('user_id', profile.user_id);
+          const { data: rolesData } = await ApiProxy.select('user_roles', {
+            filters: { user_id: profile.user_id }
+          });
 
           return {
             ...profile,
@@ -63,9 +63,8 @@ const ResidentsManagement: React.FC = () => {
 
   const handleAddRole = async (userId: string, role: AppRole) => {
     try {
-      const { error } = await (supabase as any)
-        .from('user_roles')
-        .insert({ user_id: userId, role });
+      // Use ApiProxy instead of direct supabase calls
+      const { error } = await ApiProxy.insert('user_roles', { user_id: userId, role });
 
       if (error) throw error;
 
@@ -87,11 +86,11 @@ const ResidentsManagement: React.FC = () => {
 
   const handleRemoveRole = async (userId: string, role: AppRole) => {
     try {
-      const { error } = await (supabase as any)
-        .from('user_roles')
-        .delete()
-        .eq('user_id', userId)
-        .eq('role', role);
+      // Use ApiProxy instead of direct supabase calls
+      const { error } = await ApiProxy.delete('user_roles', {
+        user_id: userId,
+        role: role
+      });
 
       if (error) throw error;
 

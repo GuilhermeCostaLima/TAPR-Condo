@@ -9,8 +9,28 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { FileText, Search, Filter, Plus, Download, Eye, Calendar } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { ApiProxy } from '@/infrastructure/api/ApiProxy';
 import { Document } from '@/types/supabase';
 import { useToast } from '@/hooks/use-toast';
+import { z } from 'zod';
+
+const documentSchema = z.object({
+  title: z.string()
+    .trim()
+    .min(1, 'Título é obrigatório')
+    .max(200, 'Título deve ter no máximo 200 caracteres'),
+  description: z.string()
+    .max(1000, 'Descrição deve ter no máximo 1000 caracteres')
+    .optional(),
+  category: z.string(),
+  fileName: z.string()
+    .min(1, 'Arquivo é obrigatório')
+    .max(255, 'Nome do arquivo muito longo'),
+  fileType: z.string()
+    .regex(/^[a-zA-Z0-9\/\-\+\.]+$/, 'Tipo de arquivo inválido'),
+  fileSize: z.number()
+    .max(10 * 1024 * 1024, 'Arquivo deve ter no máximo 10MB')
+});
 
 const DocumentsManagement: React.FC = () => {
   const [documents, setDocuments] = useState<Document[]>([]);
@@ -36,10 +56,11 @@ const DocumentsManagement: React.FC = () => {
   const fetchDocuments = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('documents')
-        .select('*')
-        .order('created_at', { ascending: false });
+      
+      // Use ApiProxy instead of direct supabase calls
+      const { data, error } = await ApiProxy.select('documents', {
+        order: { column: 'created_at', ascending: false }
+      });
 
       if (error) throw error;
       setDocuments(data || []);
@@ -207,24 +228,27 @@ const DocumentsManagement: React.FC = () => {
 
       if (uploadError) throw uploadError;
 
-      // Create document record
-      const documentData = {
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('documents')
+        .getPublicUrl(`documents/${fileName}`);
+
+      // Create document record using ApiProxy
+      const docData = {
         title: newDocument.title,
         description: newDocument.description,
         category: newDocument.category,
         file_name: selectedFile.name,
         file_type: selectedFile.type,
-        file_url: `documents/${fileName}`,
+        file_url: publicUrl,
         file_size: selectedFile.size,
         uploaded_by: userData.user.id,
         is_public: true
       };
 
-      const { error } = await supabase
-        .from('documents')
-        .insert([documentData]);
+      const { error: dbError } = await ApiProxy.insert('documents', [docData]);
 
-      if (error) throw error;
+      if (dbError) throw dbError;
 
       toast({
         title: "Sucesso",

@@ -10,6 +10,36 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { Building2, User } from 'lucide-react';
+import { z } from 'zod';
+
+const signUpSchema = z.object({
+  email: z.string()
+    .trim()
+    .email('Email inválido')
+    .max(255, 'Email deve ter no máximo 255 caracteres'),
+  password: z.string()
+    .min(8, 'Senha deve ter no mínimo 8 caracteres')
+    .max(100, 'Senha deve ter no máximo 100 caracteres')
+    .regex(/[A-Z]/, 'Senha deve conter ao menos uma letra maiúscula')
+    .regex(/[a-z]/, 'Senha deve conter ao menos uma letra minúscula')
+    .regex(/[0-9]/, 'Senha deve conter ao menos um número'),
+  displayName: z.string()
+    .trim()
+    .min(1, 'Nome é obrigatório')
+    .max(100, 'Nome deve ter no máximo 100 caracteres'),
+  apartmentNumber: z.string()
+    .trim()
+    .max(10, 'Número do apartamento deve ter no máximo 10 caracteres')
+    .optional()
+});
+
+const signInSchema = z.object({
+  email: z.string()
+    .trim()
+    .email('Email inválido'),
+  password: z.string()
+    .min(1, 'Senha é obrigatória')
+});
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -39,6 +69,26 @@ const Auth = () => {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+
+    // Validate input using Zod schema
+    try {
+      signUpSchema.parse({
+        email,
+        password,
+        displayName,
+        apartmentNumber: role === 'resident' ? apartmentNumber : undefined
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast({
+          title: "Erro de Validação",
+          description: error.errors[0].message,
+          variant: "destructive"
+        });
+        setLoading(false);
+        return;
+      }
+    }
 
     try {
       const redirectUrl = `${window.location.origin}/`;
@@ -91,6 +141,24 @@ const Auth = () => {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+
+    // Validate input using Zod schema
+    try {
+      signInSchema.parse({
+        email,
+        password
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast({
+          title: "Erro de Validação",
+          description: error.errors[0].message,
+          variant: "destructive"
+        });
+        setLoading(false);
+        return;
+      }
+    }
 
     try {
       const { error } = await supabase.auth.signInWithPassword({

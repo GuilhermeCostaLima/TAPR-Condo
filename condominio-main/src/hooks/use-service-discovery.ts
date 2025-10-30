@@ -1,0 +1,1 @@
+export { useServiceDiscovery } from '@/presentation/hooks/useServiceDiscovery';

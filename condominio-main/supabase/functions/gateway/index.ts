@@ -5,21 +5,20 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Role hierarchy similar to gateway-service RoleType.java
+// Role hierarchy aligned with frontend RoleType
 enum RoleType {
   RESIDENT = 1,
-  SYNDICATE = 2,
-  MANAGER = 3,
-  ADMIN = 4,
+  ADMIN = 2,
+  SUPER_ADMIN = 3,
 }
 
-type UserRole = 'resident' | 'syndicate' | 'manager' | 'admin';
+type UserRole = 'resident' | 'admin' | 'super_admin';
 
 // Route protection map (similar to AuthorizationFilter.routeRole)
 const routeRoleMap: Record<string, UserRole> = {
   '/admin': 'admin',
-  '/settings': 'manager',
-  '/residents': 'syndicate',
+  '/settings': 'admin',
+  '/residents': 'admin',
   '/reservations': 'resident',
   '/documents': 'resident',
   '/notices': 'resident',
@@ -27,9 +26,8 @@ const routeRoleMap: Record<string, UserRole> = {
 
 const roleHierarchy: Record<UserRole, RoleType> = {
   resident: RoleType.RESIDENT,
-  syndicate: RoleType.SYNDICATE,
-  manager: RoleType.MANAGER,
   admin: RoleType.ADMIN,
+  super_admin: RoleType.SUPER_ADMIN,
 };
 
 function covers(userRole: UserRole, requiredRole: UserRole): boolean {
@@ -147,11 +145,12 @@ Deno.serve(async (req) => {
       return forbidden('User has no roles assigned');
     }
 
-    // Get highest role (similar to getting max level)
+    // Get highest role level
     const highestRole = userRoles
       .map(r => r.role as UserRole)
+      .filter(r => roleHierarchy[r] !== undefined) // Filter out invalid roles
       .reduce((highest, current) => {
-        return roleHierarchy[current] > roleHierarchy[highest] ? current : highest;
+        return (roleHierarchy[current] || 0) > (roleHierarchy[highest] || 0) ? current : highest;
       }, 'resident' as UserRole);
 
     console.log('Gateway: User role:', highestRole, 'Required role:', requiredRole);
