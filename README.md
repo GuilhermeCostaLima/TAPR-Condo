@@ -69,4 +69,7 @@ Onde estão definidas:
 - Criar conta na página Auth
 - Roles são atribuídas via tabela user_roles
 
+# Pode ser visto em funcionamento com hospedágem no vercel
+https://condominio-jade.vercel.app/auth
+
 
